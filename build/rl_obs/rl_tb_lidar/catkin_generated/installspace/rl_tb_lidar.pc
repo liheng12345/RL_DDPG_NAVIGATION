@@ -1,0 +1,8 @@
+prefix=/home/lh/catkin_ws/install
+
+Name: rl_tb_lidar
+Description: Description of rl_tb_lidar
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

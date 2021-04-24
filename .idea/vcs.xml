@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/src/ackermann_msgs" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/mbot_navigation/navigation_msgs" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/path-planning" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/teb_local_planner_tutorials" vcs="Git" />
+  </component>
+</project>

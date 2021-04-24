@@ -1,0 +1,8 @@
+prefix=/home/lh/catkin_ws/install
+
+Name: mantis_ddqn_navigation
+Description: Description of mantis_ddqn_navigation
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

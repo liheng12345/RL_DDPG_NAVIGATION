@@ -1,0 +1,63 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/lh/catkin_ws/devel/include/**",
+        "/home/lh/xbot-u/devel/include/**",
+        "/home/lh/biped_robot/devel/include/**",
+        "/home/lh/CMP9767M-master/devel/include/**",
+        "/home/lh/catkin_MPC/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/lh/biped_robot/src/DynamixelSDK/ros/dynamixel_sdk/include/**",
+        "/home/lh/biped_robot/src/humanoid_navigation/footstep_planner/include/**",
+        "/home/lh/biped_robot/src/humanoid_navigation/gridmap_2d/include/**",
+        "/home/lh/xbot-u/src/ROS-Academy-for-Beginners-melodic/dependlib/hector_slam/hector_geotiff/include/**",
+        "/home/lh/xbot-u/src/ROS-Academy-for-Beginners-melodic/dependlib/hector_slam/hector_map_tools/include/**",
+        "/home/lh/xbot-u/src/ROS-Academy-for-Beginners-melodic/dependlib/hector_slam/hector_mapping/include/**",
+        "/home/lh/xbot-u/src/ROS-Academy-for-Beginners-melodic/dependlib/hector_slam/hector_marker_drawing/include/**",
+        "/home/lh/biped_robot/src/humanoid_navigation/humanoid_localization/include/**",
+        "/home/lh/biped_robot/src/humanoid_navigation/humanoid_planner_2d/include/**",
+        "/home/lh/catkin_MPC/src/kobuki_bumper2pc/include/**",
+        "/home/lh/catkin_MPC/src/kobuki_gazebo_plugins/include/**",
+        "/home/lh/catkin_MPC/src/kobuki_keyop/include/**",
+        "/home/lh/catkin_MPC/src/kobuki_node/include/**",
+        "/home/lh/catkin_MPC/src/kobuki_safety_controller/include/**",
+        "/home/lh/catkin_ws/src/my_navigation/lslidar_c16/lslidar_c16_decoder/include/**",
+        "/home/lh/catkin_ws/src/my_navigation/lslidar_c16/lslidar_c16_driver/include/**",
+        "/home/lh/guyueju/src/mbot_bringup/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_action_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_balance_control/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-Demo-master/op3_ball_detector/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_base_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-Demo-master/op3_demo/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_direct_control_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-Tools-master/op3_gui_demo/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_head_control_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_kinematics_dynamics/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_localization/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_online_walking_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_tuning_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/op3_walking_module/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-OP3-master/open_cr_module/include/**",
+        "/home/lh/xbot-u/src/ROS-Academy-for-Beginners-melodic/dependlib/openslam_gmapping/include/**",
+        "/home/lh/catkin_ws/src/my_navigation/pointcloud_to_laserscan/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-Framework-master/robotis_controller/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-Framework-master/robotis_device/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-Framework-master/robotis_framework_common/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-Math-master/robotis_math/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-Utility-master/ros_madplay_player/include/**",
+        "/home/lh/biped_robot/src/ROBOTIS-Utility-master/ros_mpg321_player/include/**",
+        "/home/lh/catkin_MPC/src/turtlebot_apps/turtlebot_actions/include/**",
+        "/home/lh/catkin_MPC/src/yocs_cmd_vel_mux/include/**",
+        "/home/lh/catkin_MPC/src/yocs_controllers/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}
