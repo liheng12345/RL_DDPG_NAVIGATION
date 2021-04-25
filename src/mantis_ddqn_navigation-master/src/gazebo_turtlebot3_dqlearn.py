@@ -71,43 +71,10 @@ class AgentPosController():
         model_state_msg.model_name = self.agent_model_name
 
         if SELECT_MAP == "maze1":
-            # maze 1
-            xy_list = [[-1.5, 0.5], [-1.5, 1.5], [-0.5, 0.5], [-0.5, 1.5],
-                       [0.5, -0.5], [0.5, -1.5], [2.5, -0.5], [2.5, 0.5],
-                       [5.5, -1.5], [5.5, -0.5], [5.5, 0.5], [5.5, 1.5]]
-        elif SELECT_MAP == "maze2":
-            # maze 2
-            xy_list = [
-                [-1.5, -1.5],
-                [-0.5, -1.5],
-                [-1.5, -0.5],
-                [-0.5, 1.5],
-                [1.5, 0.5],
-                [2.5, 2.5],
-                [2.5, 3.5],
-                [1.5, 3.5],
-            ]
-        else:
-            # maze 3
-            xy_list = [
-                [0.5, 0.5],
-                [1.5, 0.5],
-                [0.5, 1.5],
-                [1.5, 1.5],
-                [-0.5, -0.5],
-                [-1.5, -0.5],
-                [-1.5, -1.5],
-                [0.5, -0.5],
-                [0.5, -1.5],
-                [1.5, -1.5],
-                [-1.5, 0.5],
-                [-0.5, 1.5],
-                [-1.5, 1.5],
-            ]
-
-        # 随机选择机器人的位置
-        pose = Pose()
-        pose.position.x, pose.position.y = random.choice(xy_list)
+            # 随机选择机器人的位置
+            pose = Pose()
+            pose.position.x = round(random.uniform(-2, 5), 3)
+            pose.position.y = round(random.uniform(-1.5, 1.5), 3)
 
         model_state_msg.pose = pose
         model_state_msg.twist = Twist()
@@ -414,7 +381,7 @@ class Turtlebot3GymEnv():
             arefa = [100, 1]
             reward = -distanceToTarget * arefa[0] - abs(
                 AngleToTarget) * arefa[1]
-        print('距离:', distanceToTarget, '角度：', AngleToTarget, '奖赏：', reward)
+        #print('距离:', distanceToTarget, '角度：', AngleToTarget, '奖赏：', reward)
         return np.asarray(state), reward, done
 
     def reset(self):
@@ -425,7 +392,7 @@ class Turtlebot3GymEnv():
         # self.resetGazebo()
 
         # 传送机器人到一个随机的位置
-        agentX, agentY = self.agentController.teleportfixed()
+        agentX, agentY = self.agentController.teleportRandom()
 
         # 每次启动都删出目标点，重新设置目标点
         # self.goalCont.deleteModel()

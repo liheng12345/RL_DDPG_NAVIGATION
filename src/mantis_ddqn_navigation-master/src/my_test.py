@@ -423,7 +423,6 @@ if __name__ == '__main__':
                     #     action +
                     #     np.random.normal([0, 0], [0.7, 0.3], size=action_dim))
                     action = apf.apf_robot()
-                    print(action[0], "  ", action[1])
                     # 用当前动作与环境进行互动
                     next_state, reward, done = env.step(action)
                     # 给当前环境存放训练用的数据
@@ -432,7 +431,6 @@ if __name__ == '__main__':
 
                     state = next_state
                     step += 1
-                    print(step)
                     if done is True:
                         break
                 else:
