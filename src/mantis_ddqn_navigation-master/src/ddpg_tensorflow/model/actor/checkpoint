@@ -1,0 +1,6 @@
+model_checkpoint_path: "/home/lh/catkin_ws/src/mantis_ddqn_navigation-master/src/ddpg_tensorflow/model/actor/actor-network-140000"
+all_model_checkpoint_paths: "/home/lh/catkin_ws/src/mantis_ddqn_navigation-master/src/ddpg_tensorflow/model/actor/actor-network-100000"
+all_model_checkpoint_paths: "/home/lh/catkin_ws/src/mantis_ddqn_navigation-master/src/ddpg_tensorflow/model/actor/actor-network-110000"
+all_model_checkpoint_paths: "/home/lh/catkin_ws/src/mantis_ddqn_navigation-master/src/ddpg_tensorflow/model/actor/actor-network-120000"
+all_model_checkpoint_paths: "/home/lh/catkin_ws/src/mantis_ddqn_navigation-master/src/ddpg_tensorflow/model/actor/actor-network-130000"
+all_model_checkpoint_paths: "/home/lh/catkin_ws/src/mantis_ddqn_navigation-master/src/ddpg_tensorflow/model/actor/actor-network-140000"
