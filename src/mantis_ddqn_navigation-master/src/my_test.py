@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 –*-
 from geometry_msgs.msg import Twist
-from gazebo_turtlebot3_dqlearn import Turtlebot3GymEnv
+from gazebo_ddpg import Turtlebot3GymEnv
 import argparse
 from itertools import count
 import os
@@ -102,7 +102,7 @@ class Actor(nn.Module):
         # 由于采用批量数据时需要对数据进行拼接，所有要把一维的向量扩维成二维的
 
         # -----------貌似直接一个reshape函数就可以---------------#
-        x1 = torch.relu(self.l3(x)[:, 0])
+        x1 = torch.sigmoid(self.l3(x)[:, 0])
         x1 = x1.clamp(0, self.max_speed)
         x1 = x1.unsqueeze(1)
         x2 = torch.tanh(self.l3(x)[:, 1])
@@ -135,7 +135,7 @@ class Critic(nn.Module):
     def forward(self, x, u):
         x = torch.relu(self.l1(torch.cat([x, u], 1)))
         # 这里应该让奖赏是负值，不能使用relu函数
-        x = torch.tanh(self.l2(x))
+        x = torch.relu(self.l2(x))
         x = self.l3(x)
         return x
 
@@ -412,19 +412,19 @@ if __name__ == '__main__':
     state = env.reset()
     state_dim = len(state)
     action_dim = 2
-    max_action = [0.5, 0.5]
+    max_action = [0.5, 1]
     agent = DDPG(state_dim, action_dim, max_action)
     args.mode = "train"
     # 判断是进行训练还是测试
     if args.mode == "train":
         total_step = 0
-        collect_data_step_max = 100
+        collect_data_step_max = 10
         for i in range(1000000):
             episode_reward = 0
             step = 0
             state = env.reset()
             for t in count():
-                if total_step < collect_data_step_max:
+                if i < collect_data_step_max:
                     # 依据状态在actor网络中计算动作
                     # action = agent.calculate_action(state)
                     # action = [0, 0]
