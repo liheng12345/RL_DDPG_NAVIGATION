@@ -32,7 +32,7 @@ parser.add_argument('--random_seed', default=9527, type=int)
 
 parser.add_argument('--sample_frequency', default=2000, type=int)
 parser.add_argument('--render', default=True, type=bool)  # show UI or not
-parser.add_argument('--log_interval', default=50, type=int)  #
+parser.add_argument('--log_interval', default=10, type=int)  #
 parser.add_argument('--load', default=False, type=bool)  # load model
 parser.add_argument(
     '--render_interval', default=100,
@@ -102,16 +102,25 @@ class Actor(nn.Module):
         # 由于采用批量数据时需要对数据进行拼接，所有要把一维的向量扩维成二维的
 
         # -----------貌似直接一个reshape函数就可以---------------#
-        x1 = torch.sigmoid(self.l3(x)[:, 0])
+        x1 = torch.relu(self.l3(x)[:, 0])
+        x1 = x1.clamp(0, self.max_speed)
         x1 = x1.unsqueeze(1)
         x2 = torch.tanh(self.l3(x)[:, 1])
         x2 = x2.unsqueeze(1)
+        x2 = x2.clamp(-self.max_angular, self.max_angular)
         # 参数0是安装行着拼接，1是安装列拼接（前提至少应该是一个二维向量）
         x = torch.cat((x1, x2), 1)
         # 为了限幅需要对数据进行广播处理，让两个tensor的维度对应，输出是一个turble
-        c = torch.broadcast_tensors(
-            torch.Tensor([self.max_speed, self.max_angular]), x)
-        x = c[0].to(device) * x
+        # for i in range(len(x)):
+        #     if x[i, 0] > self.max_speed:
+        #         x[i, 0] = self.max_speed
+        #     if x[i, 1] > self.max_angular:
+        #         x[i, 1] = self.max_angular
+        #     if x[i, 1] < -self.max_angular:
+        #         x[i, 1] = -self.max_angular
+        # c = torch.broadcast_tensors(
+        #     torch.Tensor([self.max_speed, self.max_angular]), x)
+        # x = c[0].to(device) * x
         return x
 
 
@@ -405,11 +414,12 @@ if __name__ == '__main__':
     action_dim = 2
     max_action = [0.5, 0.5]
     agent = DDPG(state_dim, action_dim, max_action)
+    args.mode = "train"
     # 判断是进行训练还是测试
     if args.mode == "train":
         total_step = 0
         collect_data_step_max = 100
-        for i in range(100):
+        for i in range(1000000):
             episode_reward = 0
             step = 0
             state = env.reset()
@@ -440,6 +450,7 @@ if __name__ == '__main__':
                     action = agent.calculate_action(state)
                     # 用当前动作与环境进行互动
                     next_state, reward, done = env.step(action)
+                    print(action)
                     # 给当前环境存放训练用的数据
                     agent.replay_buffer.push(
                         (state, next_state, action, reward, np.float(done)))
@@ -459,3 +470,23 @@ if __name__ == '__main__':
 
             if i % args.log_interval == 0:
                 agent.save()
+    if args.mode == 'test':
+        agent.load()
+        total_step = 0
+        for i in range(700000):
+            step = 0
+            state = env.reset()
+            episode_reward = 0
+            for t in count():
+                # 依据状态在actor网络中计算动作
+                action = agent.calculate_action(state)
+                # 用当前动作与环境进行互动
+                next_state, reward, done = env.step(action)
+                state = next_state
+                step += 1
+                episode_reward += reward
+                if done is True:
+                    break
+            total_step += step + 1
+            print("Total T:{}   Episode: {}   Total Reward: {:0.2f}".format(
+                total_step, i, episode_reward))

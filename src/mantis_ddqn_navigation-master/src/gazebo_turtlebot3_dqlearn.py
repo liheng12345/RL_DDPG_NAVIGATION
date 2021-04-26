@@ -72,10 +72,17 @@ class AgentPosController():
 
         if SELECT_MAP == "maze1":
             # 随机选择机器人的位置
-            pose = Pose()
-            pose.position.x = round(random.uniform(-2, 5), 3)
-            pose.position.y = round(random.uniform(-1.5, 1.5), 3)
 
+            xy_list = [[-1.5, 0.5], [-1.5, 1.5], [-0.5, 0.5], [-0.5, 1.5],
+                       [0.5, -0.5], [0.5, -1.5], [2.5, -0.5], [2.5, 0.5],
+                       [5.5, -1.5], [5.5, -0.5], [5.5, 0.5], [5.5, 1.5]]
+            # pose = Pose()
+            # pose.position.x = round(random.uniform(-2, 5), 3)
+            # pose.position.y = round(random.uniform(-1.5, 1.5), 3)
+
+        # 随机选择机器人的位置
+        pose = Pose()
+        pose.position.x, pose.position.y = random.choice(xy_list)
         model_state_msg.pose = pose
         model_state_msg.twist = Twist()
 
