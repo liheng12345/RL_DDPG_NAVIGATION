@@ -26,7 +26,7 @@ parser.add_argument('--learning_rate', default=1e-4, type=float)
 parser.add_argument('--gamma', default=0.99, type=int)  # discounted factor
 parser.add_argument('--capacity', default=1000000,
                     type=int)  # replay buffer size
-parser.add_argument('--batch_size', default=100, type=int)  # mini batch size
+parser.add_argument('--batch_size', default=50, type=int)  # mini batch size
 parser.add_argument('--seed', default=True, type=bool)
 parser.add_argument('--random_seed', default=9527, type=int)
 # optional parameters
@@ -41,7 +41,7 @@ parser.add_argument(
 parser.add_argument('--exploration_noise', default=0.5, type=float)
 parser.add_argument('--max_episode', default=100000, type=int)  # num of games
 parser.add_argument('--print_log', default=5, type=int)
-parser.add_argument('--update_iteration', default=200, type=int)
+parser.add_argument('--update_iteration', default=10, type=int)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -186,48 +186,55 @@ class DDPG(object):
             reward = torch.FloatTensor(reward).to(device)
 
             # 依据s_next和actor网络计算以后的action来计算target_Q
-
+            # 梯度计算
+            self.critic_optimizer.zero_grad()
             # 这里特别注意这里的状态是多维的，大小是batch_size，为了计算loss的期望s
             target_Q = self.critic_target(next_state,
                                           self.actor_target(next_state))
             target_Q = reward + (done * args.gamma * target_Q).detach()
-
             # 计算估计值current_Q
             current_Q = self.critic(state, action)
-
             # 计算critic loss
             critic_loss = torch_function.mse_loss(current_Q, target_Q)
-
             # 将每一步的loss值保存在tensorboard
             self.writer.add_scalar(
                 'Loss/critic_loss',
                 critic_loss,
                 global_step=self.num_critic_update_iteration)
-
-            # 梯度计算
-            self.critic_optimizer.zero_grad()
             critic_loss.backward()
             self.critic_optimizer.step()
+
+            # 冻结critic网络参数
+            next_state.cpu(), action.cpu(), reward.cpu(), done.cpu(
+            ), target_Q.cpu(), current_Q.cpu()
+            for Critic in self.critic.parameters():
+                Critic.requires_grad = False
+
+            # 梯度计算，应该冻结critic网络的参数
+            self.actor_optimizer.zero_grad()
             # 计算 actor loss
             actor_loss = -self.critic(state, self.actor(state)).mean()
             self.writer.add_scalar('Loss/actor_loss',
                                    actor_loss,
                                    global_step=self.num_actor_update_iteration)
-            # 梯度计算
-            self.actor_optimizer.zero_grad()
             actor_loss.backward()
             self.actor_optimizer.step()
+            # 解冻critic网络参数
+            for Critic in self.critic.parameters():
+                Critic.requires_grad = True
 
-            # 更新目标网络的参数
-            for param, target_param in zip(self.critic.parameters(),
-                                           self.critic_target.parameters()):
-                target_param.data.copy_(args.tau * param.data +
-                                        (1 - args.tau) * target_param.data)
+            with torch.no_grad():
+                # 更新目标网络的参数
+                for param, target_param in zip(
+                        self.critic.parameters(),
+                        self.critic_target.parameters()):
+                    target_param.data.copy_(args.tau * param.data +
+                                            (1 - args.tau) * target_param.data)
 
-            for param, target_param in zip(self.actor.parameters(),
-                                           self.actor_target.parameters()):
-                target_param.data.copy_(args.tau * param.data +
-                                        (1 - args.tau) * target_param.data)
+                for param, target_param in zip(self.actor.parameters(),
+                                               self.actor_target.parameters()):
+                    target_param.data.copy_(args.tau * param.data +
+                                            (1 - args.tau) * target_param.data)
 
             self.num_actor_update_iteration += 1
             self.num_critic_update_iteration += 1
@@ -429,10 +436,11 @@ if __name__ == '__main__':
     if args.mode == "train":
         total_step = 0
         # 初始开始使用apf算法进行数据采集
-        collect_data_step_max = 1
+        collect_data_step_max = 300
         # 设定训练时动作执行的方差
         var = 1.
-
+        #保存好的数据
+        savelist = []
         for i in range(1000000):
             episode_reward = 0
             step = 0
@@ -445,16 +453,23 @@ if __name__ == '__main__':
                     # 给当前环境存放训练用的数据
                     agent.replay_buffer.push(
                         (state, next_state, action, reward, np.float(done)))
-
+                    savelist.append(
+                        (state, next_state, action, reward, np.float(done)))
                     state = next_state
                     step += 1
                     total_step += 1
                     if done is True:
                         break
+                torch.save(savelist, "apf_teacher.txt")
+
             else:
+                if i == collect_data_step_max:
+                    # 加载保存好的数据
+                    savelist = torch.load("apf_teacher.txt")
+                    for index in range(len(savelist)):
+                        agent.replay_buffer.push(savelist[index])
+
                 for t in count():
-                    if total_step == collect_data_step_max:
-                        print("收集%d个数据完成", collect_data_step_max)
                     # 依据状态在actor网络中计算动作
                     action = agent.calculate_action(state)
                     # 在训练的时候给动作加点噪声，保证都能采样到
@@ -488,6 +503,8 @@ if __name__ == '__main__':
                             "Total T:{}   Episode: {}   average reward: {:0.2f}"
                             .format(total_step, i, episode_reward / step))
                         agent.update()
+                        # 显存释放
+                        torch.cuda.empty_cache()
             if i % args.log_interval == 0:
                 agent.save()
     if args.mode == 'test':

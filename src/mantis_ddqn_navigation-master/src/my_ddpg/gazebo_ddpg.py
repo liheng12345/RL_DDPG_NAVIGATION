@@ -201,12 +201,15 @@ class Turtlebot3GymEnv():
         # 获取目标点的位置
         self.targetPointX, self.targetPointY = self.goalCont.calculate_fix_goal(
         )
+        self.past_distanceToTarget = 0
+        self.past_AngleToTarget = 0
         self.angPos = 0
         self.position_x = 0
         self.position_y = 0
         # 默认意味机器人没有到达了目标点，再开始重新复位环境
         self.isTargetReached = True
         self.getOdomData()
+        self.adaptive_cmd_flag = False
 
     def pauseGazebo(self):
         '''
@@ -335,6 +338,9 @@ class Turtlebot3GymEnv():
             # 判断是否发生碰撞
             if (self.minCrashRange > laserData[i] > 0):
                 isCrash = True
+            # 判断是否应该强制调整机器人的位置
+            if (self.minCrashRange + 0.6 > laserData[i] > 0):
+                self.adaptive_cmd_flag = True
             # 雷达数据无穷大的时候强制设置为10
             if np.isinf(laserData[i]):
                 laserData[i] = self.laserMaxRange
@@ -356,12 +362,6 @@ class Turtlebot3GymEnv():
         # gazebo开启
         self.unpauseGazebo()
         reward = 0
-        # 计算机器人朝向，速度
-        velCmd = Twist()
-        velCmd.linear.x = action[0]
-        velCmd.angular.z = action[1]
-
-        self.velPub.publish(velCmd)
 
         # 获取观测
         laserData = self.getLaserData()
@@ -372,23 +372,46 @@ class Turtlebot3GymEnv():
         self.targetPointX, self.targetPointY = self.goalCont.getTargetPoint()
         state, isCrash = self.calculateState(laserData, odomData)
         # 计算到目标点的距离
-        distanceToTarget = state[-3]
+        current_distance = state[-3]
         # 计算到目标点的朝向
         AngleToTarget = state[-4]
         done = False
+        # 强制调整机器人位置
+        # 计算机器人朝向，速度
+        velCmd = Twist()
+        if self.adaptive_cmd_flag:
+            velCmd.angular.z = 0.5 * AngleToTarget / 180 * math.pi
+            print("force turn")
+            if abs(AngleToTarget) < 10:
+                velCmd.linear.x = action[0]
+            else:
+                velCmd.linear.x = 0
+        else:
+            # 计算机器人朝向，速度
+            velCmd.linear.x = action[0] / 2
+            velCmd.angular.z = action[1]
+        self.adaptive_cmd_flag = False
+        self.velPub.publish(velCmd)
+
         if isCrash:
             done = True
-            reward = -15000
-        elif distanceToTarget < 0.2:  # Reached to target
+            reward = -150
+        elif current_distance < 0.2:  # Reached to target
             self.isTargetReached = True
-            reward = 200000
+            reward = 200
             done = True
         else:
             # 没有到达目标点也没有发生碰撞,计算奖赏,距离越近，奖赏越大
-            arefa = [100, 1]
-            reward = -distanceToTarget * arefa[0] - abs(
-                AngleToTarget) * arefa[1]
-        #print('距离:', distanceToTarget, '角度：', AngleToTarget, '奖赏：', reward)
+            distance_rate = self.past_distanceToTarget - current_distance
+            #  angle_rate = self.past_AngleToTarget - AngleToTarget
+            reward = 500. * (distance_rate -
+                             abs(AngleToTarget / 180 * math.pi))
+            self.past_distanceToTarget = current_distance
+            self.past_AngleToTarget = AngleToTarget
+            # arefa = [100, 1]
+            # reward = -distanceToTarget * arefa[0] - abs(
+            #     AngleToTarget) * arefa[1]
+        # print('距离:', current_distance, '角度：', AngleToTarget, '奖赏：', reward)
         return np.asarray(state), reward, done
 
     def reset(self):
