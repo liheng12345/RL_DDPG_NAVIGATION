@@ -958,6 +958,12 @@ turtlebot3_description_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/turtlebot3/tur
 turtlebot3_description_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/turtlebot3/turtlebot3_description
 
 //Value Computed by CMake
+turtlebot3_dqn_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/turtlebot3_machine_learning/turtlebot3_dqn
+
+//Value Computed by CMake
+turtlebot3_dqn_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/turtlebot3_machine_learning/turtlebot3_dqn
+
+//Value Computed by CMake
 turtlebot3_example_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/turtlebot3/turtlebot3_example
 
 //Value Computed by CMake
@@ -976,10 +982,16 @@ turtlebot3_gazebo_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/turtlebot3_simulati
 turtlebot3_gazebo_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo
 
 //Value Computed by CMake
+turtlebot3_machine_learning_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/turtlebot3_machine_learning/turtlebot3_machine_learning
+
+//Value Computed by CMake
+turtlebot3_machine_learning_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/turtlebot3_machine_learning/turtlebot3_machine_learning
+
+//Value Computed by CMake
 turtlebot3_msgs_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/turtlebot3_msgs
 
 //The directory containing a CMake configuration file for turtlebot3_msgs.
-turtlebot3_msgs_DIR:PATH=/home/lh/tb_84/devel/share/turtlebot3_msgs/cmake
+turtlebot3_msgs_DIR:PATH=/home/lh/catkin_ws/devel/share/turtlebot3_msgs/cmake
 
 //Value Computed by CMake
 turtlebot3_msgs_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/turtlebot3_msgs

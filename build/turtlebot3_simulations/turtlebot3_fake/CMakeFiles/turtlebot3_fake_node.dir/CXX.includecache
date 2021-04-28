@@ -6,6 +6,24 @@
 
 #IncludeRegexTransform: 
 
+/home/lh/catkin_ws/devel/include/turtlebot3_msgs/SensorState.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+std_msgs/Header.h
+-
+
 /home/lh/catkin_ws/src/turtlebot3_simulations/turtlebot3_fake/include/turtlebot3_fake/turtlebot3_fake.h
 math.h
 -
@@ -36,24 +54,6 @@ turtlebot3_fake.h
 
 /home/lh/catkin_ws/src/turtlebot3_simulations/turtlebot3_fake/src/turtlebot3_fake.cpp
 turtlebot3_fake/turtlebot3_fake.h
--
-
-/home/lh/tb_84/devel/include/turtlebot3_msgs/SensorState.h
-string
--
-vector
--
-map
--
-ros/types.h
--
-ros/serialization.h
--
-ros/builtin_message_traits.h
--
-ros/message_operations.h
--
-std_msgs/Header.h
 -
 
 /opt/ros/melodic/include/geometry_msgs/Point.h
