@@ -693,9 +693,6 @@ ZeroMQ_DIR:PATH=ZeroMQ_DIR-NOTFOUND
 ZeroMQ_LIBRARY_zmq:FILEPATH=/usr/lib/x86_64-linux-gnu/libzmq.so
 
 //Path to a file.
-_file_name:FILEPATH=/home/lh/catkin_ws/src/rl_obs/stage_ros_u/test/cmdpose_tests.xml
-
-//Path to a file.
 _gmock_INCLUDES:FILEPATH=/usr/include/gmock/gmock.h
 
 //Path to a file.
@@ -861,12 +858,6 @@ onelib:FILEPATH=/usr/lib/x86_64-linux-gnu/libsdformat.so
 //The directory containing a CMake configuration file for pluginlib.
 pluginlib_DIR:PATH=/opt/ros/melodic/share/pluginlib/cmake
 
-//Value Computed by CMake
-rl_tb_lidar_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/rl_obs/rl_tb_lidar
-
-//Value Computed by CMake
-rl_tb_lidar_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/rl_obs/rl_tb_lidar
-
 //The directory containing a CMake configuration file for rosconsole.
 rosconsole_DIR:PATH=/opt/ros/melodic/share/rosconsole/cmake
 
@@ -897,23 +888,11 @@ rospack_DIR:PATH=/opt/ros/melodic/share/rospack/cmake
 //The directory containing a CMake configuration file for rospy.
 rospy_DIR:PATH=/opt/ros/melodic/share/rospy/cmake
 
-//The directory containing a CMake configuration file for rostest.
-rostest_DIR:PATH=/opt/ros/melodic/share/rostest/cmake
-
 //The directory containing a CMake configuration file for rostime.
 rostime_DIR:PATH=/opt/ros/melodic/share/rostime/cmake
 
 //The directory containing a CMake configuration file for sensor_msgs.
 sensor_msgs_DIR:PATH=/opt/ros/melodic/share/sensor_msgs/cmake
-
-//The directory containing a CMake configuration file for stage.
-stage_DIR:PATH=/opt/ros/melodic/lib/cmake/Stage
-
-//Value Computed by CMake
-stage_ros_u_BINARY_DIR:STATIC=/home/lh/catkin_ws/build/rl_obs/stage_ros_u
-
-//Value Computed by CMake
-stage_ros_u_SOURCE_DIR:STATIC=/home/lh/catkin_ws/src/rl_obs/stage_ros_u
 
 //The directory containing a CMake configuration file for std_msgs.
 std_msgs_DIR:PATH=/opt/ros/melodic/share/std_msgs/cmake

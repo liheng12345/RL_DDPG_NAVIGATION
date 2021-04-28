@@ -1,0 +1,8 @@
+prefix=/home/lh/catkin_ws/install
+
+Name: turtlebot3_dqn
+Description: Description of turtlebot3_dqn
+Version: 1.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: rospy
