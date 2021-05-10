@@ -431,7 +431,7 @@ if __name__ == '__main__':
     action_dim = 2
     max_action = [1, 1]
     agent = DDPG(state_dim, action_dim, max_action)
-    args.mode = "test"
+    args.mode = "train"
     # 判断是进行训练还是测试
     if args.mode == "train":
         total_step = 0

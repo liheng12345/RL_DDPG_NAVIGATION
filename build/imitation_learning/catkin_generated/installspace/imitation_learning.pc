@@ -1,0 +1,8 @@
+prefix=/home/lh/catkin_ws/install
+
+Name: imitation_learning
+Description: Description of imitation_learning
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: 
