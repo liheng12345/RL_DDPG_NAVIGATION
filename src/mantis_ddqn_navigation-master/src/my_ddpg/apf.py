@@ -2,7 +2,7 @@
 #coding=utf-8
 import math
 from geometry_msgs.msg import Twist
-
+from gazebo_ddpg import Turtlebot3GymEnv
 #####################----APF参数设置-----#####################
 """
         :param start_posi_flag: 起点
@@ -173,7 +173,7 @@ class APF(Turtlebot3GymEnv):
         if vel_msg.angular.z > self.max_angular:
             vel_msg.angular.z = self.max_angular
         # 令机器人转向的的时候线速度为0
-        if abs(vel_msg.angular.z) > 10.0 / 180 * math.pi:
-            vel_msg.linear.x = 0
+        # if abs(vel_msg.angular.z) > 10.0 / 180 * math.pi:
+        #     vel_msg.linear.x = 0
         action = [vel_msg.linear.x, vel_msg.angular.z]
         return action

@@ -53,7 +53,7 @@ class ImitationNet(nn.Module):
 
 def train(model, mode='dagger'):
     if mode == 'dagger':
-        args.epochs = 50
+        args.epochs = 150
     elif mode == 'supervised':
         args.epochs = 150
     args.save_dir = os.getcwd() + '/models/' + mode + '/'
