@@ -94,9 +94,9 @@ class Vector2d():
 """
 
 
-class APF(Turtlebot3GymEnv):
-    def __init__(self, Turtlebot3GymEnv):
-        super(APF, self).__init__()
+class APF():
+    def __init__(self, env):
+        self.env = env
         self.current_pos = Vector2d(0, 0)
         self.goal = Vector2d(0, 0)
         self.obstacles = [Vector2d(0, 0)]
@@ -145,15 +145,15 @@ class APF(Turtlebot3GymEnv):
 
     def out_put_velocity(self):
         # 初始化数据
-        self.getOdomData()
-        self.current_pos = Vector2d(self.position_x, self.position_y)
-        self.goal = Vector2d(self.targetPointX, self.targetPointY)
+        self.env.getOdomData()
+        self.current_pos = Vector2d(self.env.position_x, self.env.position_y)
+        self.goal = Vector2d(self.env.targetPointX, self.env.targetPointY)
 
         f_vec = self.attractive() + self.repulsion()
         ######----角度计算-----##########
         # 注意这里必须是atan2，否则角度会出问题
         angular = math.atan2(f_vec.direction[1],
-                             f_vec.direction[0]) - self.angPos
+                             f_vec.direction[0]) - self.env.angPos
         if angular > math.pi:
             angular = math.pi - 2 * math.pi
         if angular < -math.pi:

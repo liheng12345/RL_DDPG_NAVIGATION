@@ -160,8 +160,8 @@ class GoalController():
         # Wait for deleting
         time.sleep(0.5)
 
-        self.goal_position.position.x, self.goal_position.position.y = [2, 0.5]
-
+        # self.goal_position.position.x, self.goal_position.position.y = [2, 0.5]
+        self.goal_position.position.x, self.goal_position.position.y = [2, 3]
         self.last_goal_x = self.goal_position.position.x
         self.last_goal_y = self.goal_position.position.y
 

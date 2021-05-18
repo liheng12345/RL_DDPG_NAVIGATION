@@ -25,11 +25,10 @@ class NpEncoder(json.JSONEncoder):
             return super(NpEncoder, self).default(obj)
 
 
-class Dagger(APF):
+class Dagger():
     def __init__(self, apf, env, mode, state_dim, action_dim, max_action,
                  save_expert_path, model_path, device):
         # dagger继承APF，APF又继承了Turtlebot3GymEnv
-        super(Dagger, self).__init__(env)  # 各种变量
         self.apf = apf
         self.env = env
         self.laser = None
@@ -37,7 +36,7 @@ class Dagger(APF):
         self.true_pos = None
         self.currmode = None
         self.num_traj = 0
-        self.lr = 0.02
+        self.lr = 0.002
         self.weight_decay = 0.1
         self.batch_size = 150
         self.beta = None
@@ -59,7 +58,7 @@ class Dagger(APF):
                                   max_action,
                                   device=device)
         # 获取专家数据
-        self.expert_cmd = self.apf_robot()
+        self.expert_cmd = self.apf.apf_robot()
         self.robot_cmd = [0, 0]
         # dagger 模式
         self.COLLECT = 1
@@ -186,14 +185,16 @@ class Dagger(APF):
         self.model = self.model.to(self.device)
         self.model.eval()
         rate = rospy.Rate(20)
-        while True:
+        self.env.reset()
+        while not rospy.is_shutdown():
             # 执行策略
-            state, isCrash = self.env.calculateState(self.getLaserData(),
-                                                     self.getOdomData())
+            state, isCrash = self.env.calculateState(self.env.getLaserData(),
+                                                     self.env.getOdomData())
             vel = self.calculate_action(state)
             _, _, done = self.env.step(vel)
             # 检查是否到达目标或者碰到障碍
             if done:
+                self.env.reset()
                 print("Goal is reached. Resetting robot to start")
                 break
             rate.sleep()

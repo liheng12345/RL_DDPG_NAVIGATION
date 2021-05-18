@@ -58,7 +58,7 @@ def train(model,
     train_data = ImitationDataset(save_expert_path, device)  # 这里加载数据的mode没什么用
 
     # Set network to start training
-    opt = optim.Adam(model.parameters(), lr, weight_decay)
+    opt = optim.Adam(model.parameters(), lr, weight_decay=weight_decay)
     losses = []
     # 设定模型到训练模式
     model.train()
