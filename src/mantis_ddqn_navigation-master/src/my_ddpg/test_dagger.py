@@ -53,13 +53,13 @@ if __name__ == '__main__':
     # ---------雷达的数据是360个数据--------------------------------------------------------------#
     # odom = env.getOdomData()
     args.mode = "train"
+    max_action = [0.3, 1]
     env = Turtlebot3GymEnv()
-    apf = APF(env)
+    apf = APF(env, max_action)
     # 24+4
     state = env.reset()
     state_dim = len(state)
     action_dim = 2
-    max_action = [4, 3]
     dagger = Dagger(apf, env, args.mode, state_dim, action_dim, max_action,
                     expert_directory, model_directory, device)
     dagger.run_dagger()

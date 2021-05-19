@@ -351,7 +351,6 @@ class Turtlebot3GymEnv():
         obstacleMinRange = round(min(laserData), 2)
         # 找到最小的雷达数据的索引
         obstacleAngle = np.argmin(laserData)
-
         # 计算到目标点的距离
         if obstacleMinRange < 0.2:
             isCrash = True

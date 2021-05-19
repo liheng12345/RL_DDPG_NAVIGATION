@@ -95,16 +95,16 @@ class Vector2d():
 
 
 class APF():
-    def __init__(self, env):
+    def __init__(self, env, max_action):
         self.env = env
         self.current_pos = Vector2d(0, 0)
         self.goal = Vector2d(0, 0)
         self.obstacles = [Vector2d(0, 0)]
-        self.k_att = 8
-        self.k_rep = 1
-        self.rr = 0.9  # 斥力作用范围
-        self.max_speed = 0.3
-        self.max_angular = 0.8
+        self.k_att = 5
+        self.k_rep = 20
+        self.rr = 2  # 斥力作用范围
+        self.max_speed = max_action[0]
+        self.max_angular = max_action[1]
 
     def attractive(self):
         """
@@ -119,6 +119,8 @@ class APF():
         斥力计算, 改进斥力函数, 解决不可达问题
         :return: 斥力大小
         """
+        self.obstacles = [Vector2d(self.env.obs[0], self.env.obs[1])]
+        print(self.env.obs)
         rep = Vector2d(0, 0)  # 所有障碍物总斥力
         for obstacle in self.obstacles:
             if obstacle.deltaX == 0 and obstacle.deltaY == 0:

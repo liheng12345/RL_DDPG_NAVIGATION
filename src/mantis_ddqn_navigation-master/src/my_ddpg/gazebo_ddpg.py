@@ -161,7 +161,7 @@ class GoalController():
         time.sleep(0.5)
 
         # self.goal_position.position.x, self.goal_position.position.y = [2, 0.5]
-        self.goal_position.position.x, self.goal_position.position.y = [2, 3]
+        self.goal_position.position.x, self.goal_position.position.y = [5, 0]
         self.last_goal_x = self.goal_position.position.x
         self.last_goal_y = self.goal_position.position.y
 
@@ -178,7 +178,6 @@ class Turtlebot3GymEnv():
     def __init__(self):
         # Initialize the node
         rospy.init_node('turtlebot3_gym_env', anonymous=True)
-
         # 连接gazebo
         self.velPub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
@@ -206,6 +205,8 @@ class Turtlebot3GymEnv():
         self.angPos = 0
         self.position_x = 0
         self.position_y = 0
+        # 障碍物信息
+        self.obs = [0, 0]
         # 默认意味机器人没有到达了目标点，再开始重新复位环境
         self.isTargetReached = True
         self.getOdomData()
@@ -245,7 +246,7 @@ class Turtlebot3GymEnv():
         '''
         获取雷达数据
         '''
-        self.unpauseGazebo()
+        # self.unpauseGazebo()
         try:
             laserData = rospy.wait_for_message('/scan', LaserScan, timeout=5)
             return laserData
@@ -256,7 +257,7 @@ class Turtlebot3GymEnv():
         '''
         返回机器人的位置和朝向
         '''
-        self.unpauseGazebo()
+        # self.unpauseGazebo()
         try:
             odomData = rospy.wait_for_message('/odom', Odometry, timeout=5)
             odomData = odomData.pose.pose
@@ -289,7 +290,6 @@ class Turtlebot3GymEnv():
             self.angPos = y
             self.position_x = robotX
             self.position_y = robotY
-            self.pauseGazebo()
             return yaw, robotX, robotY
 
         except Exception as e:
@@ -351,7 +351,22 @@ class Turtlebot3GymEnv():
         obstacleMinRange = round(min(laserData), 2)
         # 找到最小的雷达数据的索引
         obstacleAngle = np.argmin(laserData)
-
+        angle = obstacleAngle / len(laserData) * 360
+        if angle > 180:
+            angle = angle - 2 * 180
+        if angle > 90 and angle <= 180:
+            x = -obstacleMinRange * math.cos(math.pi - angle / 180 * math.pi)
+            y = obstacleMinRange * math.sin(math.pi - angle / 180 * math.pi)
+        elif angle >= -180 and angle < -90:
+            x = -obstacleMinRange * math.cos(math.pi + angle / 180 * math.pi)
+            y = -obstacleMinRange * math.sin(math.pi + angle / 180 * math.pi)
+        elif angle >= -90 and angle < 0:
+            x = obstacleMinRange * math.cos(-angle / 180 * math.pi)
+            y = -obstacleMinRange * math.sin(-angle / 180 * math.pi)
+        else:
+            x = obstacleMinRange * math.cos(angle / 180 * math.pi)
+            y = obstacleMinRange * math.sin(angle / 180 * math.pi)
+        self.obs = [x, y]
         # 计算到目标点的距离
         if obstacleMinRange < 0.2:
             isCrash = True
@@ -365,7 +380,7 @@ class Turtlebot3GymEnv():
         在仿真环境中执行一步，并且暂停仿真，返回机器人状态信息
         '''
         # gazebo开启
-        self.unpauseGazebo()
+        # self.unpauseGazebo()
         reward = 0
 
         # 获取观测
@@ -373,11 +388,12 @@ class Turtlebot3GymEnv():
         odomData = self.getOdomData()
 
         # gazebo仿真暂停
-        self.pauseGazebo()
+        # self.pauseGazebo()
 
         # 获取目标点的位置
         self.targetPointX, self.targetPointY = self.goalCont.getTargetPoint()
-        state, isCrash = self.calculateState(laserData, odomData)
+        if odomData is not None:
+            state, isCrash = self.calculateState(laserData, odomData)
         # 计算到目标点的距离
         current_distance = state[-3]
         # 计算到目标点的朝向
@@ -418,11 +434,11 @@ class Turtlebot3GymEnv():
             # distance_rate = 100 * (self.past_distanceToTarget -
             #                        current_distance)
             distance_rate = -current_distance + 4
-            angle_reward = math.pi - abs(AngleToTarget / 180 * math.pi)
-            reward = 0.5 * (distance_rate + angle_reward)
+            angle_reward = (math.pi - abs(AngleToTarget / 180 * math.pi))**2
+            reward = (0.1 * distance_rate + 0.9 * angle_reward)
             self.past_distanceToTarget = current_distance
             self.past_AngleToTarget = AngleToTarget
-        # print('距离:', current_distance, '角度：', AngleToTarget, '奖赏：', reward)
+        print('距离:', current_distance, '角度：', AngleToTarget, '奖赏：', reward)
         return np.asarray(state), reward, done
 
     def reset(self):
@@ -439,10 +455,10 @@ class Turtlebot3GymEnv():
         # self.goalCont.deleteModel()
         self.goalCont.respawnModel()
         # 重启仿真观测数据
-        self.unpauseGazebo()
+        # self.unpauseGazebo()
         laserData = self.getLaserData()
         odomData = self.getOdomData()
-        self.pauseGazebo()
+        # self.pauseGazebo()
 
         # 获得机器人的数据
         state, isCrash = self.calculateState(laserData, odomData)

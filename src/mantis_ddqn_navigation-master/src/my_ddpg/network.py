@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 from norm_batch import BatchNorm
+import torch.nn.functional as F
 
 
 class Actor(nn.Module):
@@ -41,6 +42,45 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
+
+        self.l1 = nn.Linear(state_dim + action_dim, 400)
+        self.l2 = nn.Linear(400, 300)
+        self.l3 = nn.Linear(300, 1)
+
+    def forward(self, x, u):
+        x = torch.relu(self.l1(torch.cat([x, u], 1)))
+        # 这里应该让奖赏是负值，不能使用relu函数
+        x = torch.relu(self.l2(x))
+        x = self.l3(x)
+        return x
+
+
+class PPO_Actor(nn.Module):
+    def __init__(self, mode, state_dim, action_dim, max_action):
+        super(PPO_Actor, self).__init__()
+
+        if mode == "train":
+            training_bool = True
+        else:
+            training_bool = False
+        self.l1 = nn.Linear(state_dim, 300)
+        self.l2 = nn.Linear(300, 200)
+        self.mu_head = nn.Linear(200, action_dim)
+        self.sigma_head = nn.Linear(200, action_dim)
+        self.max_speed = max_action[0]
+        self.max_angular = max_action[1]
+
+    def forward(self, x):
+        x = torch.relu(self.fc(x))
+        mu = 2.0 * torch.tanh(self.mu_head(x))
+        # 取值范围是【0-1】，强行平滑以后的Relu=max(0,x)函数
+        sigma = F.softplus(self.sigma_head(x))
+        return (mu, sigma)
+
+
+class PPO_Critic(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(PPO_Critic, self).__init__()
 
         self.l1 = nn.Linear(state_dim + action_dim, 400)
         self.l2 = nn.Linear(400, 300)
