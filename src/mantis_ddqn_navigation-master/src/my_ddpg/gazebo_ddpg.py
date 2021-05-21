@@ -10,7 +10,7 @@ from gazebo_msgs.srv import SpawnModel, DeleteModel, SetModelState
 
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Quaternion
 from geometry_msgs.msg import Point
 
 from nav_msgs.msg import Odometry
@@ -29,6 +29,21 @@ class AgentPosController():
     def __init__(self):
         self.agent_model_name = "turtlebot3_waffle"
 
+    def ToQuaternion(self, yaw, pitch, roll):
+        cy = math.cos(yaw * 0.5)
+        sy = math.sin(yaw * 0.5)
+        cp = math.cos(pitch * 0.5)
+        sp = math.sin(pitch * 0.5)
+        cr = math.cos(roll * 0.5)
+        sr = math.sin(roll * 0.5)
+
+        q = Quaternion()
+        q.w = cy * cp * cr + sy * sp * sr
+        q.x = cy * cp * sr - sy * sp * cr
+        q.y = sy * cp * sr + cy * sp * cr
+        q.z = sy * cp * cr - cy * sp * sr
+        return q
+
     def teleportfixed(self):
         '''
         传送机器人位置
@@ -40,7 +55,7 @@ class AgentPosController():
         # 选择机器人的位置
         pose = Pose()
         pose.position.x, pose.position.y = [-1, 0]
-
+        pose.orientation = self.ToQuaternion(0 / 180 * math.pi, 0, 0)
         model_state_msg.pose = pose
         model_state_msg.twist = Twist()
 
@@ -161,7 +176,7 @@ class GoalController():
         time.sleep(0.5)
 
         # self.goal_position.position.x, self.goal_position.position.y = [2, 0.5]
-        self.goal_position.position.x, self.goal_position.position.y = [5, 0]
+        self.goal_position.position.x, self.goal_position.position.y = [2, 0]
         self.last_goal_x = self.goal_position.position.x
         self.last_goal_y = self.goal_position.position.y
 
@@ -200,8 +215,10 @@ class Turtlebot3GymEnv():
         # 获取目标点的位置
         self.targetPointX, self.targetPointY = self.goalCont.calculate_fix_goal(
         )
-        self.past_distanceToTarget = 0
-        self.past_AngleToTarget = 0
+        self.past_distanceToTarget = 99
+        self.past_anglur = 0
+        self.obs_min_dist = 0.2
+        self.goal_min_dist = 0.4
         self.angPos = 0
         self.position_x = 0
         self.position_y = 0
@@ -211,6 +228,7 @@ class Turtlebot3GymEnv():
         self.isTargetReached = True
         self.getOdomData()
         self.adaptive_cmd_flag = False
+        self.max_action = [0.5, 1]
 
     def pauseGazebo(self):
         '''
@@ -367,8 +385,9 @@ class Turtlebot3GymEnv():
             x = obstacleMinRange * math.cos(angle / 180 * math.pi)
             y = obstacleMinRange * math.sin(angle / 180 * math.pi)
         self.obs = [x, y]
+        # print(self.obs)
         # 计算到目标点的距离
-        if obstacleMinRange < 0.2:
+        if obstacleMinRange < self.obs_min_dist:
             isCrash = True
 
         return laserData + [
@@ -398,6 +417,7 @@ class Turtlebot3GymEnv():
         current_distance = state[-3]
         # 计算到目标点的朝向
         AngleToTarget = state[-4]
+        obstacleMinRange = state[-3]
         done = False
 
         # 计算机器人朝向，速度
@@ -421,24 +441,53 @@ class Turtlebot3GymEnv():
         velCmd.linear.x = action[0]
         velCmd.angular.z = action[1]
         self.velPub.publish(velCmd)
-
+        one = [0, 0, 0, 0]
         if isCrash:
             done = True
-            reward = -2
-        elif current_distance < 0.2:  # Reached to target
+            reward = -200
+        elif current_distance < self.goal_min_dist:  # Reached to target
             self.isTargetReached = True
-            reward = 4
+            reward = 100
             done = True
         else:
-            # 没有到达目标点也没有发生碰撞,计算奖赏,距离越近，奖赏越大
-            # distance_rate = 100 * (self.past_distanceToTarget -
-            #                        current_distance)
-            distance_rate = -current_distance + 4
-            angle_reward = (math.pi - abs(AngleToTarget / 180 * math.pi))**2
-            reward = (0.1 * distance_rate + 0.9 * angle_reward)
+            # navigation reward
+            # 1.目标奖赏
+            if current_distance < self.past_distanceToTarget:
+                one[0] = 1
+            else:
+                one[0] = 0
+            reward_target = action[0] / self.max_action[0] * math.cos(
+                AngleToTarget / 180 * math.pi) + 5 * one[0] - 6
+            # 2.超过120度加入惩罚项
+            if abs(AngleToTarget) > 120:
+                one[1] = 1
+            else:
+                one[1] = 0
+            reward_fov = (3 * math.cos(AngleToTarget / 180 * math.pi) -
+                          5) * one[1]
+            # 3.惩罚较大的角速度
+            K_v_theta = 1 / 2 * self.max_action[1] * max(
+                2 * abs(action[1]), abs(action[1] - self.past_anglur))
+            if K_v_theta > 0.5:
+                one[2] = 1
+            else:
+                one[2] = 0
+            reward_v_theta = -2 * K_v_theta * one[2]
+
+            # 4.靠近障碍物给大的惩罚项
+            if obstacleMinRange < 0.4:
+                one[3] = 1
+            else:
+                one[3] = 0
+            reward_danger = (60 * max(
+                (obstacleMinRange - 0.35), 0) - 5) * one[3]
+
+            # 总的奖赏
+            reward = reward_target + reward_fov + reward_v_theta + reward_danger
+
             self.past_distanceToTarget = current_distance
-            self.past_AngleToTarget = AngleToTarget
-        print('距离:', current_distance, '角度：', AngleToTarget, '奖赏：', reward)
+            self.past_anglur = action[1]
+        # print('距离:', current_distance, '角度：', AngleToTarget, '奖赏：', reward)
         return np.asarray(state), reward, done
 
     def reset(self):
@@ -452,7 +501,7 @@ class Turtlebot3GymEnv():
         agentX, agentY = self.agentController.teleportfixed()
 
         # 每次启动都删出目标点，重新设置目标点
-        # self.goalCont.deleteModel()
+        self.goalCont.deleteModel()
         self.goalCont.respawnModel()
         # 重启仿真观测数据
         # self.unpauseGazebo()

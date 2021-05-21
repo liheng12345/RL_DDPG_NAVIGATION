@@ -22,19 +22,20 @@ def ppo_train(env, state_dim, action_dim, max_action):
 
     has_continuous_action_space = True  # continuous action space; else discrete
 
-    max_ep_len = 100  # max timesteps in one episode
+    max_ep_len = 200  # max timesteps in one episode
     max_training_timesteps = int(
         3e6)  # break training loop if timeteps > max_training_timesteps
 
     print_freq = max_ep_len * 2  # print avg reward in the interval (in num timesteps)
     log_freq = max_ep_len * 2  # log avg reward in the interval (in num timesteps)
     save_model_freq = max_ep_len * 3  # save model frequency (in num timesteps)
-
+    # 速度的方差设置的第一点
     action_std = 0.6  # starting std for action distribution (Multivariate Normal)
     action_std_decay_rate = 0.05  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
+    # 这个特别特别关键！！！！！！0.1的方差对于机器人的角速度来说就已经很大了
     min_action_std = 0.1  # minimum action_std (stop decay after action_std <= min_action_std)
     action_std_decay_freq = int(
-        max_ep_len * 3)  # action_std decay frequency (in num timesteps)
+        max_ep_len * 4)  # action_std decay frequency (in num timesteps)
 
     #####################################################
 
@@ -42,13 +43,13 @@ def ppo_train(env, state_dim, action_dim, max_action):
 
     ################ PPO hyperparameters ################
 
-    update_timestep = max_ep_len  # update policy every n timesteps
-    K_epochs = 80  # update policy for K epochs in one PPO update
+    update_timestep = max_ep_len * 2  # update policy every n timesteps
+    K_epochs = 100  # update policy for K epochs in one PPO update
 
     eps_clip = 0.2  # clip parameter for PPO
     gamma = 0.99  # discount factor
 
-    lr_actor = 0.003  # learning rate for actor network
+    lr_actor = 0.0003  # learning rate for actor network
     lr_critic = 0.001  # learning rate for critic network
 
     random_seed = 0  # set random seed if required (0 = no random seed)
@@ -115,11 +116,15 @@ def ppo_train(env, state_dim, action_dim, max_action):
     )
 
     ################# training procedure ################
-
-    # initialize a PPO agent
+    # action_std = 0.6
+    # # initialize a PPO agent
     ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma,
                     K_epochs, eps_clip, has_continuous_action_space,
                     action_std)
+
+    # best_model_path = directory + "actor.pth"
+    # print("load best model path : " + best_model_path)
+    # ppo_agent.load(best_model_path)
 
     # track total training time
     start_time = datetime.now().replace(microsecond=0)
@@ -128,7 +133,6 @@ def ppo_train(env, state_dim, action_dim, max_action):
     print(
         "============================================================================================"
     )
-
     # logging file
     log_f = open(log_f_name, "w+")
     log_f.write('episode,timestep,reward\n')
@@ -166,6 +170,7 @@ def ppo_train(env, state_dim, action_dim, max_action):
             if time_step % update_timestep == 0:
                 print("start update network")
                 ppo_agent.update()
+                env.reset()
 
             # if continuous action space; then decay action std of ouput action distribution
             if has_continuous_action_space and time_step % action_std_decay_freq == 0:
@@ -249,5 +254,5 @@ if __name__ == '__main__':
     state = env.reset()
     state_dim = len(state)
     action_dim = 2
-    max_action = [0.5, 1]
+    max_action = [0.2, 0.5]
     ppo_train(env, state_dim, action_dim, max_action)

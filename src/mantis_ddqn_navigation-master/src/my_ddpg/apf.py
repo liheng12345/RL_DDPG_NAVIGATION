@@ -77,6 +77,13 @@ class Vector2d():
     def __truediv__(self, other):
         return self.__mul__(1.0 / other)
 
+    def reverse(self):
+        vec = Vector2d(self.deltaX, self.deltaY)
+        vec.vector2d_share()
+        vec.direction[0] = -vec.direction[0]
+        vec.direction[1] = -vec.direction[1]
+        return vec
+
     def __repr__(self):
         return 'Vector deltaX:{}, deltaY:{}, length:{}, direction:{}'.format(
             self.deltaX, self.deltaY, self.length, self.direction)
@@ -101,18 +108,21 @@ class APF():
         self.goal = Vector2d(0, 0)
         self.obstacles = [Vector2d(0, 0)]
         self.k_att = 5
-        self.k_rep = 20
+        self.k_rep = 2
         self.rr = 2  # 斥力作用范围
         self.max_speed = max_action[0]
         self.max_angular = max_action[1]
+        self.min_att_dist = 2
 
     def attractive(self):
         """
         引力计算
         :return: 引力
         """
-        att = (self.goal - self.current_pos) * self.k_att  # 方向由机器人指向目标点
-        return att
+        goal_to_current_pos = self.goal - self.current_pos
+        att = goal_to_current_pos * self.k_att  # 方向由机器人指向目标点
+        att_angular = math.atan2(att.deltaY, att.deltaX)
+        return att_angular
 
     def repulsion(self):
         """
@@ -120,30 +130,26 @@ class APF():
         :return: 斥力大小
         """
         self.obstacles = [Vector2d(self.env.obs[0], self.env.obs[1])]
-        print(self.env.obs)
-        rep = Vector2d(0, 0)  # 所有障碍物总斥力
         for obstacle in self.obstacles:
             if obstacle.deltaX == 0 and obstacle.deltaY == 0:
+                rep_angular = 0
                 break
             else:
-                # obstacle = Vector2d(0, 0)
-                obs_to_rob = self.current_pos - obstacle
-                rob_to_goal = self.goal - self.current_pos
-                if (obs_to_rob.length > self.rr):  # 超出障碍物斥力影响范围
-                    pass
+                obs_to_rob = obstacle
+                if obs_to_rob.length > self.rr:
+                    rep_angular = 0
                 else:
-                    rep_1 = Vector2d(
-                        obs_to_rob.direction[0], obs_to_rob.direction[1]) * (
-                            self.k_rep *
-                            (1.0 / obs_to_rob.length - 1.0 / self.rr) /
-                            (obs_to_rob.length**2) * (rob_to_goal.length**2))
-                    rep_2 = Vector2d(
-                        rob_to_goal.direction[0],
-                        rob_to_goal.direction[1]) * (self.k_rep * (
-                            (1.0 / obs_to_rob.length - 1.0 / self.rr)**2) *
-                                                     rob_to_goal.length)
-                    rep += (rep_1 + rep_2)
-        return rep
+
+                    rep_angular = math.atan2(obs_to_rob.deltaY,
+                                             obs_to_rob.deltaX)
+                    if rep_angular > 0:
+                        rep_angular = rep_angular - math.pi
+                    else:
+                        rep_angular = rep_angular + math.pi
+                    # 让机器人距离障碍物越近，拐弯角度的比例越大（在基础的对角的角度基础作为最大）
+                    rep_angular = -rep_angular / self.rr * obs_to_rob.length + rep_angular
+
+        return rep_angular
 
     def out_put_velocity(self):
         # 初始化数据
@@ -151,15 +157,19 @@ class APF():
         self.current_pos = Vector2d(self.env.position_x, self.env.position_y)
         self.goal = Vector2d(self.env.targetPointX, self.env.targetPointY)
 
-        f_vec = self.attractive() + self.repulsion()
+        att_angular = self.attractive()
+        rep_angular = self.repulsion()
         ######----角度计算-----##########
         # 注意这里必须是atan2，否则角度会出问题
-        angular = math.atan2(f_vec.direction[1],
-                             f_vec.direction[0]) - self.env.angPos
+        # print("att_angular: ", att_angular / math.pi * 180, "rep_angular: ",
+        #       rep_angular / math.pi * 180)
+        angular = att_angular + rep_angular - self.env.angPos
+        print("angular: ", angular / math.pi * 180)
         if angular > math.pi:
             angular = math.pi - 2 * math.pi
         if angular < -math.pi:
             angular = math.pi + 2 * math.pi
+        angular = angular / 3
         speed_x = (self.current_pos - self.goal).length
         vel_msg = Vector2d(speed_x, angular)
         return vel_msg
@@ -167,13 +177,15 @@ class APF():
     def apf_robot(self):
         motion_param = self.out_put_velocity()
         vel_msg = Twist()
-        vel_msg.linear.x = motion_param.direction[0]
-        vel_msg.angular.z = motion_param.direction[1]
+        vel_msg.linear.x = motion_param.deltaX
+        vel_msg.angular.z = motion_param.deltaY
         # 速度和角速度限制
         if vel_msg.linear.x > self.max_speed:
             vel_msg.linear.x = self.max_speed
         if vel_msg.angular.z > self.max_angular:
             vel_msg.angular.z = self.max_angular
+        if vel_msg.angular.z < -self.max_angular:
+            vel_msg.angular.z = -self.max_angular
         # 令机器人转向的的时候线速度为0
         # if abs(vel_msg.angular.z) > 10.0 / 180 * math.pi:
         #     vel_msg.linear.x = 0

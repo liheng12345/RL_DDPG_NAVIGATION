@@ -12,6 +12,7 @@ import torch.optim as optim
 from dataset import ImitationDataset
 from network import Actor
 #torch.manual_seed(10)
+from ppo2 import ActorCritic
 
 
 class ImitationNet(nn.Module):
@@ -21,11 +22,25 @@ class ImitationNet(nn.Module):
     def __init__(self, mode, state_dim, action_dim, max_action, device='cpu'):
         super(ImitationNet, self).__init__()
         # 定义一个神经网络从state到控制输入
-        self.actor = Actor(mode, state_dim, action_dim, max_action).to(device)
+        self.max_action = max_action
+        self.ActorCritic = ActorCritic(state_dim,
+                                       action_dim,
+                                       has_continuous_action_space=True,
+                                       action_std_init=0.1).to(device)
 
     def forward(self, state):
-        control_predict = self.actor(state)
-        return control_predict
+        # 使用ppo网络时候，这里state应该转换为1维数组
+        state = state.squeeze(0)
+        spotplus_function = nn.Softplus()
+        tanh_function = nn.Tanh()
+        # 防止梯度下降报错，需要定义新的action
+        action = [0, 0]
+        action_mean = self.ActorCritic.actor(state)
+        action[0] = spotplus_function(action_mean[0]).clamp(
+            0, self.max_action[0])
+        action[1] = tanh_function(action_mean[1]).clamp(
+            -self.max_action[1], self.max_action[1])
+        return action_mean
 
     # 计算神经网络和目标控制率的差
     def step(self, state, target_control):
@@ -35,10 +50,10 @@ class ImitationNet(nn.Module):
         return total_loss
 
     def save(self, path):
-        torch.save(self.state_dict(), path)
+        torch.save(self.ActorCritic.state_dict(), path)
 
     def load(self, path):
-        self.load_state_dict(torch.load(path))
+        self.ActorCritic.load_state_dict(torch.load(path))
 
 
 def train(model,
@@ -58,7 +73,9 @@ def train(model,
     train_data = ImitationDataset(save_expert_path, device)  # 这里加载数据的mode没什么用
 
     # Set network to start training
-    opt = optim.Adam(model.parameters(), lr, weight_decay=weight_decay)
+    opt = optim.Adam(model.ActorCritic.actor.parameters(),
+                     lr,
+                     weight_decay=weight_decay)
     losses = []
     # 设定模型到训练模式
     model.train()

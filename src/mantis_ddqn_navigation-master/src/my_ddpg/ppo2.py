@@ -53,8 +53,8 @@ class ActorCritic(nn.Module):
 
         if has_continuous_action_space:
             self.action_dim = action_dim
-            self.action_var = torch.full(
-                (action_dim, ), action_std_init * action_std_init).to(device)
+            self.action_var = torch.Tensor([0.001,
+                                            action_std_init**2]).to(device)
 
         # actor
         if has_continuous_action_space:
@@ -79,9 +79,8 @@ class ActorCritic(nn.Module):
     def set_action_std(self, new_action_std):
 
         if self.has_continuous_action_space:
-            self.action_var = torch.full(
-                (self.action_dim, ),
-                new_action_std * new_action_std).to(device)
+            self.action_var = torch.Tensor([0.001,
+                                            new_action_std**2]).to(device)
         else:
             print(
                 "--------------------------------------------------------------------------------------------"
@@ -101,13 +100,14 @@ class ActorCritic(nn.Module):
 
         if self.has_continuous_action_space:
             action_mean = self.actor(state)
-            spotplus_function = nn.Softplus()
+            spotplus_function = nn.Sigmoid()
             tanh_function = nn.Tanh()
             action_mean[0] = spotplus_function(action_mean[0])
             action_mean[0] = action_mean[0].clamp(0, max_action[0])
             action_mean[1] = tanh_function(action_mean[1])
-            action_mean[1] = action_mean[1].clamp(-max_action[1],
-                                                  max_action[1])
+            action_mean[1] = 2 * action_mean[1].clamp(-max_action[1],
+                                                      max_action[1])
+            print("限幅输出: ", action_mean)
             cov_mat = torch.diag(self.action_var).unsqueeze(dim=0)
             dist = MultivariateNormal(action_mean, cov_mat)
         else:
@@ -123,7 +123,7 @@ class ActorCritic(nn.Module):
 
         if self.has_continuous_action_space:
             action_mean = self.actor(state)
-
+            # 将维度扩充一致
             action_var = self.action_var.expand_as(action_mean)
             cov_mat = torch.diag_embed(action_var).to(device)
             dist = MultivariateNormal(action_mean, cov_mat)
@@ -235,6 +235,7 @@ class PPO:
             self.buffer.states.append(state)
             self.buffer.actions.append(action)
             self.buffer.logprobs.append(action_logprob)
+            print("策略输出: ", action)
             return action.detach().cpu().numpy().flatten()
 
         else:
@@ -286,7 +287,7 @@ class PPO:
 
             # Finding the ratio (pi_theta / pi_theta__old)
             ratios = torch.exp(logprobs - old_logprobs.detach())
-
+            # print(ratios.mean())
             # Finding Surrogate Loss
             advantages = rewards - state_values.detach()
 
@@ -296,7 +297,7 @@ class PPO:
 
             # final loss of clipped objective PPO
             actor_loss = -torch.min(surr1, surr2) - 0.01 * dist_entropy
-            print(torch.min(surr1, surr2))
+            # print(torch.min(surr1, surr2))
             # take gradient step
             self.actor_optimizer.zero_grad()
             actor_loss.mean().backward()
